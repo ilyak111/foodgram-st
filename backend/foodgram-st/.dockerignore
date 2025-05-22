@@ -1,0 +1,8 @@
+.git
+db.sqlite3
+
+.env
+venv
+
+postman_collection
+data
