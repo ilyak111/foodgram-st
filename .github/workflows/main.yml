@@ -45,5 +45,5 @@ jobs:
         DB_PORT: 5432
       run: |
         python -m ruff check backend/
-        cd backend/foodgram-st/
+        cd backend/
         python manage.py test
