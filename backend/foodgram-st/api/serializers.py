@@ -11,9 +11,7 @@ from users.models import (
 from recipes.models import (
     Ingredient,
     RecipeIngredient,
-    Recipe,
-    ShoppingCart,
-    Favorite
+    Recipe
 )
 
 
