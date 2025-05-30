@@ -151,10 +151,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         current_user = self.context['request'].user
 
         if current_user.is_authenticated:
-            # return ShoppingCart.objects.filter(
-            #     user=current_user,
-            #     recipe=obj
-            # ).exists()
             return obj.shopping_cart.filter(user=current_user).exists()
         return False
 
@@ -189,10 +185,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         current_user = self.context['request'].user
 
         if current_user.is_authenticated:
-            # return Favorite.objects.filter(
-            #     user=current_user,
-            #     recipe=obj
-            # ).exists()
             return obj.favorite.filter(user=current_user).exists()
         return False
     
@@ -278,7 +270,6 @@ class SubscritionSerializer(serializers.ModelSerializer):
         else:
             recipes_limit = None
 
-        # recipes_queryset = Recipe.objects.filter(author=instance)
         recipes_queryset = instance.recipes.all()
 
         if recipes_limit is not None:

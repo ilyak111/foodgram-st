@@ -31,7 +31,7 @@
    
    # (+) Выполните в новой сессии терминала
    \c fg;
-   copy ingredients_myingredient(name, measurement_unit) from '/tmp/ingredients.csv' WITH (FORMAT csv, DELIMITER ',');
+   copy ingredients_ingredient(name, measurement_unit) from '/tmp/ingredients.csv' WITH (FORMAT csv, DELIMITER ',');
    ```
 
 6. Подгрузите статику

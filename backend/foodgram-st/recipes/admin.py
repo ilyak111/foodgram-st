@@ -1,9 +1,9 @@
 from django.contrib import admin
 from .models import (
-    MyRecipe,
+    Recipe,
     RecipeIngredient,
-    MyFavorite,
-    MyShoppingCart
+    Favorite,
+    ShoppingCart
 )
 
 
@@ -12,7 +12,7 @@ class AdminRecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
 
 
-class AdminMyRecipe(admin.ModelAdmin):
+class AdminRecipe(admin.ModelAdmin):
     list_display = ('id', 'name', 'count_recipes_favorites', 'get_username')
     list_filter = ('author',)
     search_fields = ('name', 'author__username')
@@ -25,16 +25,16 @@ class AdminMyRecipe(admin.ModelAdmin):
         return object.user.username
 
 
-class AdminMyFavorite(admin.ModelAdmin):
+class AdminFavorite(admin.ModelAdmin):
     list_display = ['user', 'recipe']
     autocomplete_fields = ['user', 'recipe']
 
 
-class AdminMyShoppingCart(admin.ModelAdmin):
+class AdminShoppingCart(admin.ModelAdmin):
     list_display = ('user', 'recipe')
     autocomplete_fields = ['user', 'recipe']
 
 
-admin.site.register(MyRecipe, AdminMyRecipe)
-admin.site.register(MyFavorite, AdminMyFavorite)
-admin.site.register(MyShoppingCart, AdminMyShoppingCart)
+admin.site.register(Recipe, AdminRecipe)
+admin.site.register(Favorite, AdminFavorite)
+admin.site.register(ShoppingCart, AdminShoppingCart)

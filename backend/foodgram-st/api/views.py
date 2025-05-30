@@ -161,25 +161,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if not shopping_cart_items.exists():
             return Response({'Корзина пуста.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # shopping_cart = {}
-        # for item in shopping_cart_items:
-        #     current_recipe = item.recipe
-        #     ingredients = RecipeIngredient.objects.filter(
-        #         recipe=current_recipe
-        #     )
-
-        #     for item in ingredients:
-        #         if item.ingredient not in shopping_cart:
-        #             shopping_cart[item.ingredient] = item.amount
-        #         else:
-        #             shopping_cart[item.ingredient] += item.amount
-
-        # shopping_cart_list = []
-        # shopping_cart_list.extend(
-        #     f'{ingredient}: {amount} {ingredient.measurement_unit}'
-        #     for ingredient, amount in shopping_cart.items()
-        # )
-
         recipe_ids = shopping_cart_items.values_list('recipe_id', flat=True)
         
         ingredients = RecipeIngredient.objects.filter(

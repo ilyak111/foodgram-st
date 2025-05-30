@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import MyIngredient
+from .models import Ingredient
 
 
 class AdminIngredient(admin.ModelAdmin):
@@ -8,4 +8,4 @@ class AdminIngredient(admin.ModelAdmin):
     search_fields = ('name',)
 
 
-admin.site.register(MyIngredient, AdminIngredient)
+admin.site.register(Ingredient, AdminIngredient)

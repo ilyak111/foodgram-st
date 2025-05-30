@@ -4,3 +4,4 @@ venv/
 infra/frontend/build
 .env
 postman_collection/
+backend/foodgram-st/db.sqlite3
