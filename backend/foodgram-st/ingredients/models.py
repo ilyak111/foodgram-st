@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class MyIngredient(models.Model):
+class Ingredient(models.Model):
     name = models.CharField(
         'Название',
         max_length=128

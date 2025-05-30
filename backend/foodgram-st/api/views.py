@@ -3,33 +3,34 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
+from django.db.models import F, Sum
 from .serializers import (
     CustomUserReadSerializer,
     CustomUserWriteSerializer,
     CustomUserAvatarSerializer,
-    MySubscritionSerializer,
-    MyRecipeSerializer,
+    SubscritionSerializer,
+    RecipeSerializer,
     SmallRecipeSerializer,
-    MyIngredientSerializer
+    IngredientSerializer
 )
 from api.permissions import CustomPermission
 from djoser.views import UserViewSet as DjoserUser
 from rest_framework import status, viewsets, permissions
 import django_filters
 from recipes.models import (
-    MyRecipe,
-    MyShoppingCart,
-    MyFavorite,
+    Recipe,
+    ShoppingCart,
+    Favorite,
     RecipeIngredient
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import FileResponse
-from users.models import MySubscribe, CustomUser
-from ingredients.models import MyIngredient
+from users.models import Subscribe, CustomUser
+from ingredients.models import Ingredient
 from rest_framework.pagination import PageNumberPagination
 
 
-class MyPaginator(PageNumberPagination):
+class Paginator(PageNumberPagination):
     page_size_query_param = 'limit'
     page_size = 10
 
@@ -43,7 +44,7 @@ class RecipeFilter(django_filters.FilterSet):
     )
 
     class Meta:
-        model = MyRecipe
+        model = Recipe
         fields = ['is_in_shopping_cart', 'is_favorited', 'author']
 
     def filter_is_favorited(self, queryset, name, value):
@@ -71,18 +72,18 @@ class RecipeFilter(django_filters.FilterSet):
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
-    queryset = MyIngredient.objects.all()
+    queryset = Ingredient.objects.all()
     http_method_names = ['get']
-    serializer_class = MyIngredientSerializer
+    serializer_class = IngredientSerializer
     filterset_fields = ['name']
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = MyRecipe.objects.all()
-    serializer_class = MyRecipeSerializer
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
     filter_backends = [DjangoFilterBackend]
-    pagination_class = MyPaginator
+    pagination_class = Paginator
     permission_classes = [CustomPermission]
     filterset_class = RecipeFilter
 
@@ -99,7 +100,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def handle_recipe(
         request, serializer_class, model_class, recipe_id
     ):
-        current_recipe = get_object_or_404(MyRecipe, pk=recipe_id)
+        current_recipe = get_object_or_404(Recipe, pk=recipe_id)
         current_user = request.user
 
         if request.method == 'POST':
@@ -139,14 +140,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[permissions.IsAuthenticated])
     def favorite(self, request, pk=None):
         return self.handle_recipe(
-            request, SmallRecipeSerializer, MyFavorite, pk
+            request, SmallRecipeSerializer, Favorite, pk
         )
 
     @action(detail=True, methods=['delete', 'post'],
             permission_classes=[permissions.IsAuthenticated])
     def shopping_cart(self, request, pk=None):
         return self.handle_recipe(
-            request, SmallRecipeSerializer, MyShoppingCart, pk
+            request, SmallRecipeSerializer, ShoppingCart, pk
         )
 
     @action(
@@ -158,26 +159,42 @@ class RecipeViewSet(viewsets.ModelViewSet):
         shopping_cart_items = request.user.shopping_cart.all()
 
         if not shopping_cart_items.exists():
-            return Response({'Корзина пуста.'}, status=404)
+            return Response({'Корзина пуста.'}, status=status.HTTP_404_NOT_FOUND)
 
-        shopping_cart = {}
-        for item in shopping_cart_items:
-            current_recipe = item.recipe
-            ingredients = RecipeIngredient.objects.filter(
-                recipe=current_recipe
-            )
+        # shopping_cart = {}
+        # for item in shopping_cart_items:
+        #     current_recipe = item.recipe
+        #     ingredients = RecipeIngredient.objects.filter(
+        #         recipe=current_recipe
+        #     )
 
-            for item in ingredients:
-                if item.ingredient not in shopping_cart:
-                    shopping_cart[item.ingredient] = item.amount
-                else:
-                    shopping_cart[item.ingredient] += item.amount
+        #     for item in ingredients:
+        #         if item.ingredient not in shopping_cart:
+        #             shopping_cart[item.ingredient] = item.amount
+        #         else:
+        #             shopping_cart[item.ingredient] += item.amount
 
-        shopping_cart_list = []
-        shopping_cart_list.extend(
-            f'{ingredient}: {amount} {ingredient.measurement_unit}'
-            for ingredient, amount in shopping_cart.items()
-        )
+        # shopping_cart_list = []
+        # shopping_cart_list.extend(
+        #     f'{ingredient}: {amount} {ingredient.measurement_unit}'
+        #     for ingredient, amount in shopping_cart.items()
+        # )
+
+        recipe_ids = shopping_cart_items.values_list('recipe_id', flat=True)
+        
+        ingredients = RecipeIngredient.objects.filter(
+            recipe_id__in=recipe_ids
+        ).values(
+            name=F('ingredient__name'),
+            unit=F('ingredient__measurement_unit')
+        ).annotate(
+            total_amount=Sum('amount')
+        ).order_by('ingredient__name')
+        
+        shopping_cart_list = [
+            f"{item['name']}: {item['total_amount']} {item['unit']}"
+            for item in ingredients
+        ]
 
         return FileResponse(
             "\n".join(shopping_cart_list),
@@ -189,7 +206,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 class UserViewSet(DjoserUser):
     queryset = CustomUser.objects.all()
-    pagination_class = MyPaginator
+    pagination_class = Paginator
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve", "me"]:
@@ -202,17 +219,12 @@ class UserViewSet(DjoserUser):
             data=request.data
         )
 
-        if current_serializer.is_valid():
+        if current_serializer.is_valid(raise_exception=True):
             current_serializer.save()
             user_data = current_serializer.data
             user_data.pop('avatar', None)
             user_data.pop('is_subscribed', None)
-            return Response(user_data, status=201)
-        else:
-            return Response(
-                {'Некорректные данные пользователя'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response(user_data, status=status.HTTP_201_CREATED)
 
     @action(
         methods=['GET'],
@@ -220,12 +232,12 @@ class UserViewSet(DjoserUser):
         permission_classes=[IsAuthenticated]
     )
     def subscriptions(self, request):
-        subscribes = MySubscribe.objects.filter(
+        subscribes = Subscribe.objects.filter(
             user=request.user).select_related('author')
         authors = [sub.author for sub in subscribes]
         pages = self.paginate_queryset(authors)
 
-        serializer = MySubscritionSerializer(
+        serializer = SubscritionSerializer(
             pages,
             context={'request': request},
             many=True
@@ -244,7 +256,7 @@ class UserViewSet(DjoserUser):
 
         if request.method == "POST":
 
-            subscribtion, create = MySubscribe.objects.get_or_create(
+            subscribtion, create = Subscribe.objects.get_or_create(
                 author=author,
                 user=subscriber
             )
@@ -263,7 +275,7 @@ class UserViewSet(DjoserUser):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            serializer = MySubscritionSerializer(
+            serializer = SubscritionSerializer(
                 subscriber,
                 context={"request": request}
             )
@@ -271,7 +283,7 @@ class UserViewSet(DjoserUser):
 
         try:
             get_object_or_404(
-                MySubscribe,
+                Subscribe,
                 author=author,
                 user=subscriber
             ).delete()
@@ -308,13 +320,11 @@ class UserViewSet(DjoserUser):
             data=request.data,
             context={'request': request}
         )
-        if current_serializer.is_valid():
+        if current_serializer.is_valid(raise_exception=True):
             current_serializer.save()
             return Response(
                 {'avatar': current_user.avatar.url}
             )
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         methods=['post'],

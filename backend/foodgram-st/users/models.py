@@ -52,7 +52,7 @@ class CustomUser(AbstractUser):
         return self.email
 
 
-class MySubscribe(models.Model):
+class Subscribe(models.Model):
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
@@ -71,7 +71,7 @@ class MySubscribe(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'author'],
-                name='unique_mysubscribe_user_author'
+                name='unique_subscribe_user_author'
             ),
         ]
         verbose_name_plural = 'Подписки'

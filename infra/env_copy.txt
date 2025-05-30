@@ -1,0 +1,11 @@
+DEBUG=0
+
+SECRET_KEY=django-insecure-ilyailyailyailya
+
+ALLOWED_HOSTS=127.0.0.1,backend,localhost,foodgram-backend
+
+DB_NAME=fg
+DB_USER=postgres
+POSTGRES_PASSWORD=qwerty123
+DB_PORT=5432
+DB_HOST=foodgram-database
