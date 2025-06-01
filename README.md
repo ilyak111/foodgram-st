@@ -7,19 +7,17 @@
    cd infra
    ```
 
-2. Запустите docker контейнеры
+2. Скопируйте шаблон .env файла и заполните его в соответствии с вашими данными
+   ```bash
+   cp env_copy.txt .env
+   ```
+
+3. Запустите docker контейнеры
    ```bash
    docker-compose up -d --build
    ```
 
-3. Создайте новую сессию терминала (если команда должна быть запущена из неё, то будет указано (+)) и зайдите в PostgreSQL и создайте базу данных
-   ```bash
-   # (+) Выполните в новой сессии терминала
-   docker exec -it foodgram-database psql -U postgres
-   create database fg;
-   ```
-
-4. Создайте миграции и примените
+4. Создайте и примените миграции
    ```bash
    docker exec -it foodgram-backend python manage.py makemigrations
    docker exec -it foodgram-backend python manage.py migrate
@@ -27,11 +25,7 @@
 
 5. Скопируйте таблицу ингридиентов в базу данных
    ```bash
-   docker cp "/home/user/Documents/foodgram-st/data/ingredients.csv" foodgram-database:tmp/
-   
-   # (+) Выполните в новой сессии терминала
-   \c fg;
-   copy ingredients_ingredient(name, measurement_unit) from '/tmp/ingredients.csv' WITH (FORMAT csv, DELIMITER ',');
+   docker exec -it foodgram-backend python manage.py load_ingredients_database data/ingredients.json
    ```
 
 6. Подгрузите статику
