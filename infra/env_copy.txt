@@ -1,6 +1,6 @@
 DEBUG=0
 
-SECRET_KEY=django-insecure-ilyailyailyailya
+SECRET_KEY=django-insecure-your-secret-key
 
 ALLOWED_HOSTS=127.0.0.1,backend,localhost,foodgram-backend
 

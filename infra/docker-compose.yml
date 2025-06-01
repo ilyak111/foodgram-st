@@ -7,13 +7,17 @@ volumes:
 
 services:
   foodgram-database:
-    image: postgres:17
     container_name: foodgram-database
+    image: postgres:17
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - database_data:/var/lib/postgresql/data
     ports:
       - 5432:5432
-    env_file: ../.env
 
   foodgram-backend:
     container_name: foodgram-backend
@@ -23,7 +27,7 @@ services:
       - static:/backend_static_files/
     depends_on:
       - foodgram-database
-    env_file: ../.env
+    env_file: .env
     ports:
       - 8000:8000
 
@@ -40,7 +44,7 @@ services:
       - 8080:80
     depends_on:
       - foodgram-backend
-    env_file: ../.env
+    env_file: .env
 
   foogram-frontend:
     container_name: foogram-frontend
@@ -51,5 +55,5 @@ services:
     depends_on:
       - foodgram-backend
       - foodgram-database
-    env_file: ../.env
+    env_file: .env
   
